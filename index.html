@@ -475,18 +475,18 @@ function addScore(pts) {
 function getDiff() {
   if (score <= 25) {
     const t = score / 25;
-    return { spd: (0.15 + t * 0.05) * GH, bomb: 0,    big: 0,    ms: 1800 - t * 200 };
+    return { spd: (0.20 + t * 0.05) * GH, bomb: 0,    big: 0,    ms: 1800 - t * 200 };
   }
   if (score <= 50) {
     const t = (score - 26) / 24;
-    return { spd: (0.20 + t * 0.05) * GH, bomb: 0.20, big: 0,    ms: 1400 - t * 200 };
+    return { spd: (0.30 + t * 0.05) * GH, bomb: 0.20, big: 0,    ms: 1400 - t * 200 };
   }
   if (score <= 80) {
     const t = (score - 51) / 29;
-    return { spd: (0.30 + t * 0.10) * GH, bomb: 0.30, big: 0.10, ms: 1000 - t * 150 };
+    return { spd: (0.40 + t * 0.10) * GH, bomb: 0.30, big: 0.10, ms: 1000 - t * 150 };
   }
   const t = Math.min((score - 81) / 80, 1);
-  return { spd: (0.41 + t * 0.39) * GH, bomb: 0.31 + t * 0.19, big: 0.10, ms: Math.max(550, 850 - t * 300) };
+  return { spd: (0.51 + t * 0.39) * GH, bomb: 0.31 + t * 0.19, big: 0.10, ms: Math.max(550, 850 - t * 300) };
 }
 
 // ════════════════════════════════════════════════════
