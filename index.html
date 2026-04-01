@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEED_LARRY_FISH.exe</title>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background-image: url('assets/images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Jersey 10', monospace;
+    overflow: hidden;
+  }
+
+  /* ── WINDOW CHROME ── */
+  #game-window {
+    width: 540px;
+    border: 3px solid #c0003c;
+    box-shadow: 0 0 0 1px #8b0030, 6px 6px 0 0 #7a0028;
+    flex-shrink: 0;
+    position: relative;
+    transform: scale(0.85);
+    transform-origin: top center;
+    margin-bottom: -105px;
+  }
+
+  #titlebar {
+    background: #c0003c;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  #titlebar span {
+    color: #fff;
+    font-family: 'Jersey 10', monospace;
+    font-size: 17px;
+    letter-spacing: 1px;
+  }
+  .tb-btns { display: flex; gap: 3px; }
+  .tb-btn {
+    width: 22px; height: 20px;
+    background: #e8c0c8;
+    border: 2px solid #8b0030;
+    color: #8b0030; font-weight: bold; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-family: monospace;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ══════════════════════════
+     MAIN MENU
+  ══════════════════════════ */
+  #menu-screen {
+    position: relative;
+    width: 100%;
+    height: 680px;
+    overflow: hidden;
+  }
+  #menu-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  #menu-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 30px;
+  }
+
+  #menu-title-img {
+    font-size: 44px;
+    color: #c0003c;
+    -webkit-text-stroke: 1px #8b0030;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 0 16px 18px;
+    line-height: 1.1;
+  }
+
+  #menu-instructions {
+    width: 100%;
+    padding: 0 38px;
+  }
+  .instr-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+    font-size: 17px;
+    color: #2a0a2a;
+    line-height: 1.35;
+  }
+  .instr-icon {
+    width: 44px; height: 44px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .instr-icon img {
+    max-width: 44px; max-height: 44px;
+    image-rendering: pixelated;
+  }
+
+  #menu-start-wrap {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+  }
+  #menu-start-wrap img {
+    cursor: pointer;
+    image-rendering: pixelated;
+    transition: transform .05s, filter .05s;
+  }
+  #menu-start-wrap img:hover { filter: brightness(1.1); transform: translate(1px,1px); }
+  #menu-start-wrap img:active { transform: translate(3px,3px); filter: brightness(.95); }
+
+  /* ══════════════════════════
+     GAME SCREEN
+  ══════════════════════════ */
+  #game-screen {
+    position: relative;
+    width: 100%;
+    height: 680px;
+    overflow: hidden;
+  }
+
+  #game-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  /* Score UI */
+  #game-ui {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 10px 14px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  #score-display { font-family: 'Jersey 10', monospace; }
+  #score-label { font-size: 26px; color: #c0003c; -webkit-text-stroke: .5px #8b0030; }
+  #highest-label { font-size: 16px; color: #8b0030; }
+
+  /* Hearts */
+  #hearts-display {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    z-index: 10;
+  }
+  .heart-img {
+    width: 34px; height: 32px;
+    image-rendering: pixelated;
+  }
+
+  /* Player */
+  #player {
+    position: absolute;
+    width: 72px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    image-rendering: pixelated;
+  }
+  #player img {
+    width: 190px; height: 190px;
+    image-rendering: pixelated;
+  }
+
+  /* Falling objects */
+  .fobj {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+  .fobj img {
+    width: 100%; height: 100%;
+    image-rendering: pixelated;
+  }
+
+  /* ══════════════════════════
+     GAME OVER POPUP
+  ══════════════════════════ */
+  #go-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.25);
+    z-index: 20;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #go-overlay.show { display: flex; }
+
+  #go-popup {
+    position: relative;
+    width: 340px;
+    height: 400px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #go-popup-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 0;
+    image-rendering: pixelated;
+  }
+
+  #go-popup-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 30px 20px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #go-title {
+    font-family: 'Jersey 10', monospace;
+    font-size: 50px;
+    color: #8b0030;
+    -webkit-text-stroke: 1px #6a0020;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  #go-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+  
+  .go-btn img {
+    cursor: pointer;
+    image-rendering: pixelated;
+    height: 40px; 
+    width: auto;
+    transition: transform .05s, filter .05s;
+  }
+  .go-btn img:hover { filter: brightness(1.1); transform: translate(1px,1px); }
+  .go-btn img:active { transform: translate(3px,3px); filter: brightness(.95); }
+
+</style>
+</head>
+<body>
+
+<div id="game-window">
+
+  <!-- TITLE BAR -->
+  <div id="titlebar">
+    <span>FEED_LARRY_FISH.exe</span>
+    <div class="tb-btns">
+      <div class="tb-btn">—</div>
+      <div class="tb-btn">✕</div>
+    </div>
+  </div>
+
+  <!-- ════════════ MAIN MENU ════════════ -->
+  <div id="menu-screen" class="screen active">
+    <img id="menu-bg" src="assets/images/main_menu_bg.png" alt="">
+
+    <div id="menu-content">
+      <div id="menu-title-img">FEED_LARRY_FISH.exe</div>
+
+      <div id="menu-instructions">
+        <!-- Left arrow -->
+        <div class="instr-row">
+          <div class="instr-icon">
+            <img src="assets/images/left.png" alt="left arrow"
+              onerror="this.outerHTML='<span style=\'font-size:28px;color:#c0003c\'>⬅</span>'">
+          </div>
+          <span>Press left arrow on your keyboard to move left</span>
+        </div>
+        <!-- Right arrow -->
+        <div class="instr-row">
+          <div class="instr-icon">
+            <img src="assets/images/right.png" alt="right arrow"
+              onerror="this.outerHTML='<span style=\'font-size:28px;color:#c0003c\'>➡</span>'">
+          </div>
+          <span>Press right arrow on your keyboard to move right</span>
+        </div>
+        <!-- Small fish -->
+        <div class="instr-row">
+          <div class="instr-icon">
+            <img src="assets/images/small_fish.png" alt="small fish">
+          </div>
+          <span>Catch small fish to earn 1 point<br>(NOTE: Missing a fish costs 1 heart)</span>
+        </div>
+        <!-- Big fish -->
+        <div class="instr-row">
+          <div class="instr-icon">
+            <img src="assets/images/big_fish.png" alt="big fish">
+          </div>
+          <span>Catch big fish to earn 5 points<br>(NOTE: Missing a fish costs 1 heart)</span>
+        </div>
+        <!-- Bomb -->
+        <div class="instr-row">
+          <div class="instr-icon">
+            <img src="assets/images/bomb.png" alt="bomb">
+          </div>
+          <span>Dodge bombs at all costs<br>Catching a bomb destroys all hearts (Game Over)</span>
+        </div>
+      </div>
+
+      <div id="menu-start-wrap">
+        <img src="assets/images/start.png" alt="START" id="btn-menu-start" height="52">
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ GAME SCREEN ════════════ -->
+  <div id="game-screen" class="screen">
+
+    <!-- Background -->
+    <img id="game-bg" src="assets/images/game_bg.png" alt="">
+
+    <!-- HUD -->
+    <div id="game-ui">
+      <div id="score-display">
+        <div id="score-label">SCORE : <span id="score-val">0</span></div>
+        <div id="highest-label">Highest : <span id="high-val">0</span></div>
+      </div>
+      <div id="hearts-display">
+        <img id="heart-1" class="heart-img" src="assets/images/heart_full.png" alt="heart">
+        <img id="heart-2" class="heart-img" src="assets/images/heart_full.png" alt="heart">
+        <img id="heart-3" class="heart-img" src="assets/images/heart_full.png" alt="heart">
+      </div>
+    </div>
+
+    <!-- Player (Larry) -->
+    <div id="player">
+      <img src="assets/images/larrysprite.png" alt="Larry">
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="go-overlay">
+      <div id="go-popup">
+        <img id="go-popup-bg" src="assets/images/popup_bg.png" alt="">
+        <div id="go-popup-content">
+          <div id="go-title">GAME OVER!</div>
+          <div id="go-buttons">
+            <div class="go-btn">
+              <img src="assets/images/start.png" alt="START" id="btn-restart">
+            </div>
+            <div class="go-btn">
+              <img src="assets/images/menu.png" alt="MENU" id="btn-menu">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /game-screen -->
+
+</div><!-- /game-window -->
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════════════
+const GW      = 540;   // game width  (px)
+const GH      = 680;   // game height (px)
+const PW      = 85;    // player width
+const PH      = 170;    // player height (approx, for collision)
+const GROUND  = -10;   // px from bottom where player stands
+const SIZES   = {
+  sfish : { w: 61, h: 61 },
+  bfish : { w: 80, h: 80 },
+  bomb  : { w: 60, h: 60 }
+};
+
+// ════════════════════════════════════════════════════
+//  SOUNDS
+// ════════════════════════════════════════════════════
+const SFX = {
+  click     : new Audio('assets/sounds/button_click.mp3'),
+  catchFish : new Audio('assets/sounds/catch_fish.mp3'),
+  dropFish  : new Audio('assets/sounds/FAH.mp3'),
+  catchBomb : new Audio('assets/sounds/catch_bomb.mp3'),
+};
+function play(sfx) {
+  SFX[sfx].currentTime = 0;
+  SFX[sfx].play().catch(() => {});
+}
+
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let gameState = 'menu';
+let score     = 0;
+let hi        = parseInt(localStorage.getItem('lf_hi') || '0');
+let hearts    = 3;
+let playerX   = GW / 2 - PW / 2;
+let objects   = [];
+let keys      = {};
+let lastSpawn = 0;
+let spawnMs   = 1400;
+let rafId     = null;
+let lastT     = 0;
+
+// ════════════════════════════════════════════════════
+//  DOM REFS
+// ════════════════════════════════════════════════════
+const menuScreen  = document.getElementById('menu-screen');
+const gameScreen  = document.getElementById('game-screen');
+const playerEl    = document.getElementById('player');
+const scoreValEl  = document.getElementById('score-val');
+const highValEl   = document.getElementById('high-val');
+const goOverlay   = document.getElementById('go-overlay');
+const heartImgs   = [
+  document.getElementById('heart-1'),
+  document.getElementById('heart-2'),
+  document.getElementById('heart-3')
+];
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+function showScreen(name) {
+  menuScreen.classList.toggle('active', name === 'menu');
+  gameScreen.classList.toggle('active', name === 'game');
+}
+
+function updateHeartsUI() {
+  heartImgs.forEach((img, i) => {
+    img.src = (i < hearts)
+      ? 'assets/images/heart_full.png'
+      : 'assets/images/heart_broke.png';
+  });
+}
+
+function addScore(pts) {
+  score += pts;
+  if (score > hi) { hi = score; localStorage.setItem('lf_hi', hi); }
+  scoreValEl.textContent = score;
+  highValEl.textContent  = hi;
+}
+
+// ════════════════════════════════════════════════════
+//  DIFFICULTY
+// ════════════════════════════════════════════════════
+function getDiff() {
+  if (score <= 25) {
+    const t = score / 25;
+    return { spd: (0.15 + t * 0.05) * GH, bomb: 0,    big: 0,    ms: 1800 - t * 200 };
+  }
+  if (score <= 50) {
+    const t = (score - 26) / 24;
+    return { spd: (0.20 + t * 0.05) * GH, bomb: 0.20, big: 0,    ms: 1400 - t * 200 };
+  }
+  if (score <= 80) {
+    const t = (score - 51) / 29;
+    return { spd: (0.30 + t * 0.10) * GH, bomb: 0.30, big: 0.10, ms: 1000 - t * 150 };
+  }
+  const t = Math.min((score - 81) / 80, 1);
+  return { spd: (0.41 + t * 0.39) * GH, bomb: 0.31 + t * 0.19, big: 0.10, ms: Math.max(550, 850 - t * 300) };
+}
+
+// ════════════════════════════════════════════════════
+//  SPAWN OBJECT
+// ════════════════════════════════════════════════════
+function spawn(ts) {
+  const d   = getDiff();
+  const r   = Math.random();
+  let type  = r < d.bomb ? 'bomb' : r < d.bomb + d.big ? 'bfish' : 'sfish';
+  const src = { sfish: 'small_fish', bfish: 'big_fish', bomb: 'bomb' }[type];
+  const { w, h } = SIZES[type];
+  const x = Math.random() * (GW - w - 20) + 10;
+
+  // Build element
+  const el  = document.createElement('div');
+  el.className = 'fobj';
+  el.style.cssText = `left:${x}px; top:-${h + 10}px; width:${w}px; height:${h}px;`;
+  const img = document.createElement('img');
+  img.src = `assets/images/${src}.png`;
+  img.alt = type;
+
+  // Flip small fish randomly so they look like they're swimming toward Larry
+  if (type === 'sfish' || type === 'bfish') {
+    if (Math.random() > 0.5) img.style.transform = 'scaleX(-1)';
+  }
+
+  el.appendChild(img);
+  gameScreen.appendChild(el);
+
+  objects.push({ el, x, y: -(h + 10), w, h, type, spd: d.spd, alive: true });
+  lastSpawn = ts;
+  spawnMs   = Math.max(400, d.ms);
+}
+
+// ════════════════════════════════════════════════════
+//  COLLISION  (AABB with small margin)
+// ════════════════════════════════════════════════════
+function collides(obj) {
+  const py  = GH - GROUND - PH;
+  const mg  = 12;
+  return !(
+    obj.x + obj.w - mg < playerX + mg       ||
+    obj.x + mg         > playerX + PW - mg  ||
+    obj.y + obj.h - mg < py + mg            ||
+    obj.y + mg         > py + PH - mg
+  );
+}
+
+// ════════════════════════════════════════════════════
+//  GAME OVER
+// ════════════════════════════════════════════════════
+function triggerGameOver(fromBomb = false) {
+  if (fromBomb) play('catchBomb');  
+  hearts = 0;
+  updateHeartsUI();
+  gameState = 'gameover';
+  cancelAnimationFrame(rafId);
+  goOverlay.classList.add('show');
+}
+
+// ════════════════════════════════════════════════════
+//  MAIN LOOP
+// ════════════════════════════════════════════════════
+function loop(ts) {
+  if (gameState !== 'playing') return;
+
+  const dt = Math.min((ts - lastT) / 1000, 0.05);
+  lastT = ts;
+
+  // Move player
+  if (keys['ArrowLeft'])  playerX = Math.max(0, playerX - 280 * dt);
+  if (keys['ArrowRight']) playerX = Math.min(GW - PW, playerX + 290 * dt);
+  playerEl.style.left = playerX + 'px';
+
+  // Spawn
+  if (ts - lastSpawn > spawnMs) spawn(ts);
+
+  // Update objects
+  for (const obj of objects) {
+    if (!obj.alive) continue;
+    obj.y += obj.spd * dt;
+    obj.el.style.top = obj.y + 'px';
+
+    // Hit player?
+    if (collides(obj)) {
+      obj.alive = false;
+      obj.el.remove();
+      if (obj.type === 'bomb') { triggerGameOver(true); return; }
+      play('catchFish');
+      addScore(obj.type === 'bfish' ? 5 : 1);
+      
+    }
+
+    // Missed (reached bottom)?
+    if (obj.y > GH - GROUND + 20) {
+      obj.alive = false;
+      obj.el.remove();
+      if (obj.type !== 'bomb') {
+        play('dropFish'); 
+        hearts = Math.max(0, hearts - 1);
+        updateHeartsUI();
+        if (hearts <= 0) { triggerGameOver(); return; }
+      }
+    }
+  }
+
+  objects = objects.filter(o => o.alive);
+  rafId = requestAnimationFrame(loop);
+}
+
+// ════════════════════════════════════════════════════
+//  START / RESTART
+// ════════════════════════════════════════════════════
+function startGame() {
+  // Clean up any leftover objects
+  objects.forEach(o => { try { o.el.remove(); } catch(e) {} });
+  objects   = [];
+  score     = 0;
+  hearts    = 3;
+  playerX   = GW / 2 - PW / 2;
+
+  playerEl.style.left   = playerX + 'px';
+  playerEl.style.bottom = (GROUND - 10) + 'px';
+
+  scoreValEl.textContent = '0';
+  highValEl.textContent  = hi;
+
+  updateHeartsUI();
+  goOverlay.classList.remove('show');
+
+  lastSpawn = 0;
+  spawnMs   = 1400;
+  gameState = 'playing';
+  showScreen('game');
+
+  lastT = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+
+function goToMenu() {
+  cancelAnimationFrame(rafId);
+  objects.forEach(o => { try { o.el.remove(); } catch(e) {} });
+  objects   = [];
+  gameState = 'menu';
+  goOverlay.classList.remove('show');
+  showScreen('menu');
+}
+
+// ════════════════════════════════════════════════════
+//  EVENTS
+// ════════════════════════════════════════════════════
+document.getElementById('btn-menu-start').addEventListener('click', () => { play('click'); startGame(); });
+document.getElementById('btn-restart').addEventListener('click',    () => { play('click'); startGame(); });
+document.getElementById('btn-menu').addEventListener('click',       () => { play('click'); goToMenu(); });
+
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+playerEl.style.bottom = (GROUND - 10) + 'px';
+highValEl.textContent  = hi;
+updateHeartsUI();
+</script>
+</body>
+</html>
