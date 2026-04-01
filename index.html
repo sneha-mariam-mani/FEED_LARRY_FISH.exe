@@ -475,11 +475,11 @@ function addScore(pts) {
 function getDiff() {
   if (score <= 25) {
     const t = score / 25;
-    return { spd: (0.20 + t * 0.05) * GH, bomb: 0,    big: 0,    ms: 1800 - t * 200 };
+    return { spd: (0.20 + t * 0.05) * GH, bomb: 0,    big: 0,    ms: 1400 - t * 200 };
   }
   if (score <= 50) {
     const t = (score - 26) / 24;
-    return { spd: (0.30 + t * 0.05) * GH, bomb: 0.20, big: 0,    ms: 1400 - t * 200 };
+    return { spd: (0.30 + t * 0.05) * GH, bomb: 0.20, big: 0,    ms: 1200 - t * 200 };
   }
   if (score <= 80) {
     const t = (score - 51) / 29;
