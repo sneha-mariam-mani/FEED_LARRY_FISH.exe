@@ -204,13 +204,54 @@
   }
 
   /* ══════════════════════════
+     BOMB HIT — FRAME 1 (white flash)
+  ══════════════════════════ */
+  #bomb-frame1 {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #bomb-frame1.show { display: flex; }
+  #bomb-frame1 img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+  }
+
+  /* ══════════════════════════
+     BOMB HIT — FRAME 2 (character, fades in)
+  ══════════════════════════ */
+  #bomb-frame2 {
+    position: absolute;
+    inset: 0;
+    z-index: 31;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+  }
+  #bomb-frame2.show { display: flex; }
+  #bomb-frame2.fade-in { opacity: 1; }
+  #bomb-frame2 img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+  }
+
+  /* ══════════════════════════
      GAME OVER POPUP
   ══════════════════════════ */
   #go-overlay {
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,.25);
-    z-index: 20;
+    z-index: 40;
     display: none;
     align-items: center;
     justify-content: center;
@@ -365,6 +406,16 @@
       <img src="assets/images/larrysprite.png" alt="Larry">
     </div>
 
+    <!-- ── BOMB HIT FRAME 1 (white flash) ── -->
+    <div id="bomb-frame1">
+      <img src="assets/images/fb.png" alt="">
+    </div>
+
+    <!-- ── BOMB HIT FRAME 2 (character reaction, fades in) ── -->
+    <div id="bomb-frame2">
+      <img src="assets/images/fblarry.png" alt="">
+    </div>
+
     <!-- Game Over Overlay -->
     <div id="go-overlay">
       <div id="go-popup">
@@ -391,11 +442,11 @@
 // ════════════════════════════════════════════════════
 //  CONSTANTS
 // ════════════════════════════════════════════════════
-const GW      = 540;   // game width  (px)
-const GH      = 680;   // game height (px)
-const PW      = 85;    // player width
-const PH      = 170;    // player height (approx, for collision)
-const GROUND  = -10;   // px from bottom where player stands
+const GW      = 540;
+const GH      = 680;
+const PW      = 85;
+const PH      = 170;
+const GROUND  = -10;
 const SIZES   = {
   sfish : { w: 61, h: 61 },
   bfish : { w: 80, h: 80 },
@@ -440,6 +491,8 @@ const playerEl    = document.getElementById('player');
 const scoreValEl  = document.getElementById('score-val');
 const highValEl   = document.getElementById('high-val');
 const goOverlay   = document.getElementById('go-overlay');
+const bombFrame1  = document.getElementById('bomb-frame1');
+const bombFrame2  = document.getElementById('bomb-frame2');
 const heartImgs   = [
   document.getElementById('heart-1'),
   document.getElementById('heart-2'),
@@ -467,6 +520,12 @@ function addScore(pts) {
   if (score > hi) { hi = score; localStorage.setItem('lf_hi', hi); }
   scoreValEl.textContent = score;
   highValEl.textContent  = hi;
+}
+
+function hideBombFrames() {
+  bombFrame1.classList.remove('show');
+  bombFrame2.classList.remove('show');
+  bombFrame2.classList.remove('fade-in');
 }
 
 // ════════════════════════════════════════════════════
@@ -500,7 +559,6 @@ function spawn(ts) {
   const { w, h } = SIZES[type];
   const x = Math.random() * (GW - w - 20) + 10;
 
-  // Build element
   const el  = document.createElement('div');
   el.className = 'fobj';
   el.style.cssText = `left:${x}px; top:-${h + 10}px; width:${w}px; height:${h}px;`;
@@ -508,7 +566,6 @@ function spawn(ts) {
   img.src = `assets/images/${src}.png`;
   img.alt = type;
 
-  // Flip small fish randomly so they look like they're swimming toward Larry
   if (type === 'sfish' || type === 'bfish') {
     if (Math.random() > 0.5) img.style.transform = 'scaleX(-1)';
   }
@@ -522,7 +579,7 @@ function spawn(ts) {
 }
 
 // ════════════════════════════════════════════════════
-//  COLLISION  (AABB with small margin)
+//  COLLISION
 // ════════════════════════════════════════════════════
 function collides(obj) {
   const py  = GH - GROUND - PH;
@@ -536,15 +593,30 @@ function collides(obj) {
 }
 
 // ════════════════════════════════════════════════════
-//  GAME OVER
+//  GAME OVER  
 // ════════════════════════════════════════════════════
 function triggerGameOver(fromBomb = false) {
-  if (fromBomb) play('catchBomb');  
   hearts = 0;
   updateHeartsUI();
   gameState = 'gameover';
   cancelAnimationFrame(rafId);
-  goOverlay.classList.add('show');
+
+  if (fromBomb) {
+    play('catchBomb');
+    bombFrame1.classList.add('show');
+    setTimeout(() => {
+      bombFrame2.classList.add('show');
+      bombFrame2.getBoundingClientRect();
+      bombFrame2.classList.add('fade-in');
+      setTimeout(() => {
+        goOverlay.classList.add('show');
+      }, 800);
+
+    }, 350);
+
+  } else {
+    goOverlay.classList.add('show');
+  }
 }
 
 // ════════════════════════════════════════════════════
@@ -556,31 +628,25 @@ function loop(ts) {
   const dt = Math.min((ts - lastT) / 1000, 0.05);
   lastT = ts;
 
-  // Move player
   if (keys['ArrowLeft'])  playerX = Math.max(0, playerX - 280 * dt);
   if (keys['ArrowRight']) playerX = Math.min(GW - PW, playerX + 290 * dt);
   playerEl.style.left = playerX + 'px';
 
-  // Spawn
   if (ts - lastSpawn > spawnMs) spawn(ts);
 
-  // Update objects
   for (const obj of objects) {
     if (!obj.alive) continue;
     obj.y += obj.spd * dt;
     obj.el.style.top = obj.y + 'px';
 
-    // Hit player?
     if (collides(obj)) {
       obj.alive = false;
       obj.el.remove();
       if (obj.type === 'bomb') { triggerGameOver(true); return; }
       play('catchFish');
       addScore(obj.type === 'bfish' ? 5 : 1);
-      
     }
 
-    // Missed (reached bottom)?
     if (obj.y > GH - GROUND + 20) {
       obj.alive = false;
       obj.el.remove();
@@ -601,7 +667,6 @@ function loop(ts) {
 //  START / RESTART
 // ════════════════════════════════════════════════════
 function startGame() {
-  // Clean up any leftover objects
   objects.forEach(o => { try { o.el.remove(); } catch(e) {} });
   objects   = [];
   score     = 0;
@@ -616,6 +681,7 @@ function startGame() {
 
   updateHeartsUI();
   goOverlay.classList.remove('show');
+  hideBombFrames();
 
   lastSpawn = 0;
   spawnMs   = 1400;
@@ -632,6 +698,7 @@ function goToMenu() {
   objects   = [];
   gameState = 'menu';
   goOverlay.classList.remove('show');
+  hideBombFrames();
   showScreen('menu');
 }
 
